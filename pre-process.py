@@ -3,11 +3,12 @@ import math
 import matplotlib.pyplot as plt
 from PIL import Image
 import tensorflow as tf
+from tensorflow.keras import layers, models # type: ignore
 
 
 
 #Dataset
-pred_dir = "image_dataset/seg_pred/seg_pred"
+pred_dir = "/Users/mayurideshmukh/Desktop/Image-Classification/image_dataset/seg_pred/seg_pred"
 train_dir = "/Users/mayurideshmukh/Desktop/Image-Classification/image_dataset/seg_train/seg_train"
 test_dir = "/Users/mayurideshmukh/Desktop/Image-Classification/image_dataset/seg_test/seg_test"
 
@@ -52,3 +53,35 @@ test_dataset = test_dataset.map(lambda x, y: (normalization_layer(x), y))
 for image_batch, label_batch in train_dataset.take(1):
     print(f"Image batch shape: {image_batch.shape}")
     print(f"Label batch shape: {label_batch.shape}")
+
+
+# Load the MobileNetV2 model (without top layers)
+base_model = tf.keras.applications.MobileNetV2(input_shape=(150, 150, 3),
+                                               include_top=False,  # Remove original classifier
+                                               weights='imagenet')  # Use pretrained weights
+
+# Freeze the base model (so we don’t retrain ImageNet weights)
+base_model.trainable = False
+
+# Add custom classifier on top
+model = models.Sequential([
+    base_model,  # Pretrained feature extractor
+    layers.GlobalAveragePooling2D(),  # Reduce feature map to vector
+    layers.Dense(128, activation='relu'),  # Custom dense layer
+    layers.Dropout(0.3),  # Prevent overfitting
+    layers.Dense(6, activation='softmax')  # Output layer (6 classes)
+])
+
+# Compile the model
+model.compile(optimizer=tf.keras.optimizers.Adam(),
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train the model
+history = model.fit(train_dataset,
+                    validation_data=val_dataset,
+                    epochs=10)  # Adjust epochs as needed
+
+# Evaluate on test dataset
+test_loss, test_acc = model.evaluate(test_dataset)
+print(f"Test Accuracy: {test_acc:.4f}")
