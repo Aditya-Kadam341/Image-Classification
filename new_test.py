@@ -86,7 +86,7 @@ for images, labels in train_ds.take(1):
         plt.imshow(images[i])
         plt.title(class_names[labels[i]])
         plt.axis("off")
-plt.show()
+# plt.show()
 
 
 num_classes = len(class_names)
@@ -116,4 +116,20 @@ model.compile(optimizer = "adam",
               loss = "sparse_categorical_crossentropy",
               metrics=["accuracy"])
 
-model.summary()
+# model.summary()
+
+
+
+
+callbacks = [
+    tf.keras.callbacks.ModelCheckpoint("best_model.keras", save_best_only = True, monitor = "val_loss"),
+    tf.keras.callbacks.EarlyStopping(monitor = "val_loss", patience=5,restore_best_weights=True)
+]
+
+history = model.fit(
+    train_ds,
+    validation_data=val_ds,
+    epochs = 20,
+    callbacks=callbacks
+)
+
