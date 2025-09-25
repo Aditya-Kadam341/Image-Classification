@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import tensorflow as tf
 import numpy as np
+from tensorflow.keras import layers, models # type: ignore
 
 
 
@@ -76,3 +77,43 @@ val_ds = val_ds.cache().prefetch(buffer_size = AUTOTUNE)
 test_ds = test_ds.cache().prefetch(buffer_size = AUTOTUNE)
 
 
+plt.figure(figsize=(10,8))
+for images, labels in train_ds.take(1):
+    images = images.numpy().astype("uint8")
+    labels = labels.numpy()
+    for i in range(9):
+        ax = plt.subplot(3,3,i+1)
+        plt.imshow(images[i])
+        plt.title(class_names[labels[i]])
+        plt.axis("off")
+plt.show()
+
+
+num_classes = len(class_names)
+
+data_augentation = tf.keras.Sequential([
+    layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.08),
+    layers.RandomZoom(0.08)
+])
+
+model = models.Sequential([
+    layers.Rescaling(1./255, input_shape= (IMG_HEIGHT, IMG_WIDTH,3)),
+    data_augentation,
+    layers.Conv2D(32,3, activation = "relu"),
+    layers.MaxPooling2D(),
+    layers.Conv2D(64,3, activation = "relu"),
+    layers.MaxPooling2D(),
+    layers.Conv2D(128,3, activation = "relu"),
+    layers.MaxPooling2D(),
+    layers.Flatten(),
+    layers.Dense(128, activation = "relu"),
+    layers.Dropout(0.5),
+    layers.Dense(num_classes, activation = "softmax")
+])
+
+model.compile(optimizer = "adam",
+              loss = "sparse_categorical_crossentropy",
+              metrics=["accuracy"])
+
+model.summary()
