@@ -133,3 +133,19 @@ history = model.fit(
     callbacks=callbacks
 )
 
+import matplotlib.pyplot as plt
+
+plt.figure()
+plt.plot(history.history['loss'], label='train_loss')
+plt.plot(history.history['val_loss'], label='val_loss')
+plt.legend()
+plt.title("Loss")
+plt.show()
+
+plt.figure()
+plt.plot(history.history['accuracy'], label='train_acc')
+plt.plot(history.history['val_accuracy'], label='val_acc')
+plt.legend()
+plt.title("Accuracy")
+plt.show()
+
