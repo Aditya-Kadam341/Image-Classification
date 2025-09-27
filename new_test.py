@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import tensorflow as tf
 import numpy as np
+import glob
+from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras import layers, models # type: ignore
+from tensorflow.keras.utils import load_img, img_to_array # type: ignore
 
 
 
@@ -121,31 +124,77 @@ model.compile(optimizer = "adam",
 
 
 
-callbacks = [
-    tf.keras.callbacks.ModelCheckpoint("best_model.keras", save_best_only = True, monitor = "val_loss"),
-    tf.keras.callbacks.EarlyStopping(monitor = "val_loss", patience=5,restore_best_weights=True)
-]
+# callbacks = [
+#     tf.keras.callbacks.ModelCheckpoint("best_model.keras", save_best_only = True, monitor = "val_loss"),
+#     tf.keras.callbacks.EarlyStopping(monitor = "val_loss", patience=5,restore_best_weights=True)
+# ]
 
-history = model.fit(
-    train_ds,
-    validation_data=val_ds,
-    epochs = 20,
-    callbacks=callbacks
-)
+# history = model.fit(
+#     train_ds,
+#     validation_data=val_ds,
+#     epochs = 20,
+#     callbacks=callbacks
+# )
 
-import matplotlib.pyplot as plt
+model = tf.keras.models.load_model("best_model.keras")
+# import matplotlib.pyplot as plt
 
-plt.figure()
-plt.plot(history.history['loss'], label='train_loss')
-plt.plot(history.history['val_loss'], label='val_loss')
-plt.legend()
-plt.title("Loss")
-plt.show()
+# plt.figure()
+# plt.plot(history.history['loss'], label='train_loss')
+# plt.plot(history.history['val_loss'], label='val_loss')
+# plt.legend()
+# plt.title("Loss")
+# plt.show()
 
-plt.figure()
-plt.plot(history.history['accuracy'], label='train_acc')
-plt.plot(history.history['val_accuracy'], label='val_acc')
-plt.legend()
-plt.title("Accuracy")
-plt.show()
+# plt.figure()
+# plt.plot(history.history['accuracy'], label='train_acc')
+# plt.plot(history.history['val_accuracy'], label='val_acc')
+# plt.legend()
+# plt.title("Accuracy")
+# plt.show()
 
+
+# Evaluate numeric
+loss, acc = model.evaluate(test_ds)
+print("Test loss:", loss, "Test accuracy:", acc)
+
+# Gather true labels and predictions
+y_true = np.concatenate([y.numpy() for x,y in test_ds], axis=0)
+y_prob = model.predict(test_ds)
+y_pred = np.argmax(y_prob, axis=1)
+
+print(classification_report(y_true, y_pred, target_names=class_names))
+
+cm = confusion_matrix(y_true, y_pred)
+print("Confusion matrix:\n", cm)
+
+
+# recursively collect image files
+img_extensions = ('*.jpg','*.jpeg','*.png')
+pred_paths = []
+for ext in img_extensions:
+    pred_paths += glob.glob(os.path.join(pred_dir, '**', ext), recursive=True)
+
+print("Found", len(pred_paths), "images to predict.")
+
+X = []
+paths_order = []
+for p in pred_paths:
+    try:
+        img = load_img(p, target_size=(IMG_HEIGHT, IMG_WIDTH))
+        arr = img_to_array(img) / 255.0
+        X.append(arr)
+        paths_order.append(p)
+    except Exception as e:
+        print("Skipping", p, ":", e)
+
+if len(X) == 0:
+    print("No images found in pred_dir. Check path or file types.")
+else:
+    X = np.stack(X)
+    probs = model.predict(X)
+    preds = np.argmax(probs, axis=1)
+    for path, idx, prob in zip(paths_order, preds, np.max(probs, axis=1)):
+        print(os.path.basename(path), "->", class_names[idx], f"({prob:.3f})")
+
+model.save("final_model.keras") 
