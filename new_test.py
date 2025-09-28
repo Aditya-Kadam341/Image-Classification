@@ -29,10 +29,6 @@ def count_images_by_class(directory) :
             counts[cls] = sum(1 for f in os.listdir(cls_path) if f.lower().endswith(('.jpg','.jpeg','.png')))
     return counts
 
-# print("Train counts:", count_images_by_class(train_dir))
-# print("Test counts: ", count_images_by_class(test_dir))
-
-
 
 IMG_HEIGHT = 180
 IMG_WIDTH = 180
@@ -137,22 +133,6 @@ model.compile(optimizer = "adam",
 # )
 
 model = tf.keras.models.load_model("best_model.keras")
-# import matplotlib.pyplot as plt
-
-# plt.figure()
-# plt.plot(history.history['loss'], label='train_loss')
-# plt.plot(history.history['val_loss'], label='val_loss')
-# plt.legend()
-# plt.title("Loss")
-# plt.show()
-
-# plt.figure()
-# plt.plot(history.history['accuracy'], label='train_acc')
-# plt.plot(history.history['val_accuracy'], label='val_acc')
-# plt.legend()
-# plt.title("Accuracy")
-# plt.show()
-
 
 # Evaluate numeric
 loss, acc = model.evaluate(test_ds)
