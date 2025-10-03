@@ -7,23 +7,25 @@
 <body>
     <h2>Upload an Image for Classification</h2>
 
-    <form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data">
     <input type="file" name="file" required>
     <br><br>
+
     <label>Select Model:</label>
     <select name="model_choice">
-        <option value="cnn">CNN (Conv2D)</option>
-        <option value="mobilenet">MobileNetV2</option>
+        <option value="cnn" {% if model_choice == "cnn" %}selected{% endif %}>CNN (Conv2D)</option>
+        <option value="mobilenet" {% if model_choice == "mobilenet" %}selected{% endif %}>MobileNetV2</option>
     </select>
     <br><br>
     <input type="submit" value="Predict">
 </form>
 
 {% if label %}
-    <h3>Prediction: {{ label }}</h3>
-    <img src="{{ url_for('static', filename=filename) }}" width="300">
+    <h3>Prediction ({{ model_choice }}): {{ label }}</h3>
+    {% if filename %}
+        <img src="{{ url_for('static', filename=filename) }}" width="300">
+    {% endif %}
 {% endif %}
-    
 
 </body>
 </html>
