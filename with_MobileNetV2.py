@@ -84,7 +84,7 @@ checkpoint_full = ModelCheckpoint(
 )
 
 checkpoint_weights = ModelCheckpoint(
-    "models/mobilenet_best_weights.h5",
+    "models/mobilenet_best.weights.h5",   # <-- FIX: ends with .weights.h5
     save_weights_only=True,
     save_best_only=True,
     monitor="val_accuracy",
@@ -99,6 +99,7 @@ early_stop = EarlyStopping(
 )
 
 callbacks = [checkpoint_full, checkpoint_weights, early_stop]
+
 
 # -----------------------
 # Train (only 5 epochs)
