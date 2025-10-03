@@ -19,6 +19,13 @@ except Exception as e:
 app = Flask(__name__)
 
 
+print("🔍 Testing MobileNetV2 model load...")
+if mobilenet_model:
+    print(mobilenet_model.summary())  # check structure
+else:
+    print("⚠️ MobileNetV2 did not load")
+
+
 def predict_image (model,img_path):
     img = load_img(img_path,target_size=(IMG_HEIGHT,IMG_WIDTH))
     arr = img_to_array(img)/255.0
@@ -37,6 +44,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def index():
     prediction = None
     uploaded_file = None
+    label, confidence = None, None   # ✅ always initialize
 
     if request.method == "POST":
         model_choice = request.form.get("model_choice")
@@ -48,13 +56,21 @@ def index():
 
             if model_choice == "cnn":
                 label, confidence = predict_image(cnn_model, filepath)
-            elif model_choice == "mobilenet" and mobilenet_model is not None:
-                label, confidence = predict_image(mobilenet_model, filepath)
 
-            prediction = f"Prediction: {label} (Confidence: {confidence:.2f})"
+            elif model_choice == "mobilenet":
+                if mobilenet_model is None:
+                    prediction = "⚠️ MobileNetV2 model not loaded yet."
+                else:
+                    label, confidence = predict_image(mobilenet_model, filepath)
+
+            # ✅ only format prediction if label was set
+            if label is not None and confidence is not None:
+                prediction = f"Prediction: {label} (Confidence: {confidence:.2f})"
+
             uploaded_file = filepath
 
     return render_template("index.html", prediction=prediction, uploaded_file=uploaded_file)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
