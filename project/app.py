@@ -108,7 +108,7 @@ class_names = ['buildings', 'forest', 'glacier', 'mountain', 'sea', 'street']
 # ---------------------------
 # Load CNN model
 # ---------------------------
-cnn_model = load_model("models/finalmodel.keras")
+cnn_model = load_model("/Users/mayurideshmukh/Desktop/Image-Classification/project/models/best_model.keras")
 
 # ---------------------------
 # Load MobileNetV2 with weights
@@ -134,7 +134,7 @@ def build_mobilenet(num_classes):
 mobilenet_model = None
 try:
     mobilenet_model = build_mobilenet(len(class_names))
-    mobilenet_model.load_weights("models/mobilenet_best.weights.h5")
+    mobilenet_model.load_weights("/Users/mayurideshmukh/Desktop/Image-Classification/project/models/mobilenet_best.weights.h5")
     print("✅ MobileNetV2 loaded successfully")
 except Exception as e:
     print(f"⚠️ Could not load MobileNetV2: {e}")
@@ -156,11 +156,18 @@ def index():
     if request.method == "POST":
         file = request.files["file"]
         if file:
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+            filename = file.filename
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
+            # Ensure the static folder exists
+            os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+            # Save uploaded image
             file.save(filepath)
 
             model_choice = request.form["model_choice"]
             img_array = prepare_image(filepath)
+
 
             if model_choice == "cnn":
                 preds = cnn_model.predict(img_array)
@@ -171,7 +178,7 @@ def index():
             else:
                 label = "⚠️ MobileNetV2 not available yet."
 
-            return render_template("index.html", filename=file.filename, label=label)
+            return render_template("index.html", filename=filename, label=label)
 
     return render_template("index.html")
 
